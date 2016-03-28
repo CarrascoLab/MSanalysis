@@ -1,20 +1,23 @@
 % xmsg2struct.m for PLAttAcuity
 % Merge .msg, .dat & .mat in trial structure for given session.
 
-%% from scratch
-clear all
-unix ('./preparemv.sh') % ('./prepare.sh') % 
+% %% from scratch
+% % 
+% % clear all
+% % unix ('./preparemv.sh') % ('./prepare.sh') % 
 
 %%  collect
 nFiles=416; % (any value ~=0)
 
 addpath('../functions/');
 %  file locations %
-source= ''; datapath='../raw/'; matpath = source;
-proccd='processed/'; pblem='pblem/';
+source= ''; matpath = source;% i.e., pwd, could be altered maybe?
+dataTODOpath='../raw/'; % location of to-be-processed dat files 
+% result locations %
+processed='processed/'; pblem='pblem/';
 outpath ='../sEssStrucs/';
 
-dFormat='yyyymmdd-HHMM';
+dFormat='yyyymmdd-HHMM'; % format of date in PL_ATTN_ACC data 
 
  % experiment design parameters
     DIST   = 114;         % Monitor distance in cm
@@ -55,7 +58,7 @@ fields={'obs'
 
 
 while nFiles~=0
-fileList=dir(sprintf( '%s*.msg',datapath));
+fileList=dir(sprintf( '%s*.msg',dataTODOpath));
 nFiles=length(fileList);  
 
 % for each file... 
@@ -67,7 +70,7 @@ for f=1:nFiles
     msgstr = sprintf('%s.msg',fCode); 
     datstr = sprintf('%s.dat',fCode);
     matstr= sprintf('%s.mat',fCode);
-    msgfid = fopen([datapath   msgstr],'r');
+    msgfid = fopen([dataTODOpath   msgstr],'r');
 %     [id,date]=cell2mat(feed(textscan( fCode, '%*s %s %s', 'Delimiter','_')));
     
     [id,sessDate]=feed(textscan( fCode, '%*s %s %s', 'Delimiter','_'));
@@ -184,7 +187,7 @@ for f=1:nFiles
     [sEss.sType]=deal(constant.SESS);
     
     % % load data from fileList(f) % %
-    datfid=fopen([datapath datstr]); % open dat file
+    datfid=fopen([dataTODOpath datstr]); % open dat file
     datDump=textscan(datfid, '%f %f %f %*f'); % dump contents
     fclose(datfid); % close  
     nTrials=length(sEss); % number of trials present in incoming data 
@@ -211,15 +214,15 @@ for f=1:nFiles
     save(outstr,'sEss')
      fprintf(1,' Success!\n',fCode);
 %     % move files into processed/ folder if succesful  
-    unix(sprintf('mv %s%s %s', datapath, msgstr,sprintf('%s%s%s', datapath, proccd, msgstr)));
-    unix(sprintf('mv %s%s %s', datapath, datstr,sprintf('%s%s%s', datapath, proccd, datstr)));
-	unix(sprintf('mv %s%s %s', source, matstr,sprintf('%s%s%s', source, proccd, matstr)));
+    unix(sprintf('mv %s%s %s', dataTODOpath, msgstr,sprintf('%s%s%s', dataTODOpath, processed, msgstr)));
+    unix(sprintf('mv %s%s %s', dataTODOpath, datstr,sprintf('%s%s%s', dataTODOpath, processed, datstr)));
+	unix(sprintf('mv %s%s %s', source, matstr,sprintf('%s%s%s', source, processed, matstr)));
 end
 catch
     % move files to a problem folder if catch
     fprintf(1,'\nproblem processing %s.msg\nSet aside for now...\n',fCode);
-    unix(sprintf('mv %s%s %s', datapath, msgstr,sprintf('%s%s%s', datapath, pblem, msgstr)));
-    unix(sprintf('mv %s%s %s', datapath, datstr,sprintf('%s%s%s', datapath, pblem, datstr)));
+    unix(sprintf('mv %s%s %s', dataTODOpath, msgstr,sprintf('%s%s%s', dataTODOpath, pblem, msgstr)));
+    unix(sprintf('mv %s%s %s', dataTODOpath, datstr,sprintf('%s%s%s', dataTODOpath, pblem, datstr)));
 end
 
 end 

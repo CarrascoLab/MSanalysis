@@ -59,6 +59,8 @@ for hide=1
     for hide=1
         %     sElect.(fields):
         for hide=1
+            factFields={'sessN', 'Group','diagonal' }; % <- alter this if analyses will use other fields
+            [cIndx, cLegs] =factIndx(sElect, {'obs', factFields{:}}); % get indexes for fields of interest
             LAB=cLegs; % obs + {factFields}
             LAB.events=eFlags;
             LAB.Group={'neutral trained', 'valid trained'}; % overwriting is prettier
@@ -92,6 +94,7 @@ for hide=1
             LAB.col.Tar=[0 .75 .25];
             LAB.col.dCong=[0 .8 .2; .8 0 .2; 0.5 .1 .9];
             LAB.col.taEcc=[0.7 .1 .2; 0.5 .1 .9];
+            LAB.col.sessN= [0.5 .1 .9;0.4 .4 .4; 0 .75 .25];
         end
     end
     
@@ -117,12 +120,12 @@ for hide=1
     lAttice=1-WBmax:WAmax; % longest possible timeline
     tPointsMax=length(lAttice); % max possible timepoints
     
-      
+    
     
 end
 
 %% main sequence plot
-mainSeq(sElect, MS)
+% mainSeq(sElect, MS)
 for hide=[]
     figure
     
@@ -180,39 +183,46 @@ for hide=[]
 end
 
 %% MSrates
- % % % ANALYSIS SETUP % % %
-    preLock=min(need(sElect,'',lock,'events')); 
+% % % ANALYSIS SETUP % % %
+if lock == 0
+    preLock=-1;
+    postLock=min(need(sElect,'',nEvents,'events'));
+else
+    preLock=min(need(sElect,'',lock,'events'));
     postLock=min(need(sElect,'',nEvents,'events') -need(sElect,'',lock,'events')); % displayed period
-    %     plotIndObs=false;  % do you want to make plots showing individual observer data in each condition?
-    factFields={'sessN', 'Group','diagonal' };
-    [cIndx, cLegs] =factIndx(sElect, {'obs', factFields{:}}); % get indexes for fields of interest
-    
-    figTitles= {'Pre-training'    'Group 1 Change'    'Group 2 Change'    'Post-training'};
-    defineGroups  = {  factFields %factor fields  determines what fields the below conditions index
-        ...
-        {  2,  1,  [1 2]   % pretraining
-        2,  2,  [1 2] }
-        ...
-        {  2,  1,  [1 2]   % G1 change
-        3,  1,  [1 2] }
-        ...
-        {  2,  2,  [1 2]   % G2 change
-        3,	2,	[1 2] }
-        ...
-        {  3,  1,  [1 2]   % pretraining
-        3,  2,  [1 2] }	};
+end
+%     plotIndObs=false;  % do you want to make plots showing individual observer data in each condition?
+factFields={'sessN', 'Group','diagonal' };
+[cIndx, cLegs] =factIndx(sElect, {'obs', factFields{:}}); % get indexes for fields of interest
 
-    F2P=prepToPlot(sElect, figTitles, defineGroups,LAB); % figures to be plotted
-    nFigs=length(F2P);
+figTitles= {'Pre-training'    'Group 1 Change'    'Group 2 Change'    'Post-training'};
+defineGroups  = {  factFields %factor fields  determines what fields the below conditions index
+    ...
+    {  2,  1,  [1 2]   % pretraining
+    2,  2,  [1 2] }
+    ...
+    {  2,  1,  [1 2]   % G1 change
+    3,  1,  [1 2] }
+    ...
+    {  2,  2,  [1 2]   % G2 change
+    3,	2,	[1 2] }
+    ...
+    {  3,  1,  [1 2]   % pretraining
+    3,  2,  [1 2] }	};
+F2P=prepToPlot(sElect, figTitles, defineGroups,LAB); % figures to be plotted
+
+
+
+nFigs=length(F2P);
 for hide=1
     F2P=rateAna(sElect,F2P, factFields, lock, lAttice);
     for fig=length(F2P):-1:1 % plot each of the separate figures
         beginInd=find(lAttice==-preLock);
         endInd=find(lAttice==postLock);
-
-        figure; 
         
-        % cmap assumes two groups... 
+        figure;
+        
+        % cmap assumes two groups...
         [hLine{fig},hPatch{fig}]=boundedline(lAttice(beginInd:endInd),...
             F2P(fig).results.avRate( beginInd:endInd,:),...
             F2P(fig).results.rateSEM(beginInd:endInd,1,:),...
@@ -228,10 +238,47 @@ for hide=1
         title(F2P(fig).titles)
         
         %    event labeling
-        plotEvents(sElect,lock,preLock,postLock,[LAB.events]); 
+        plotEvents(sElect,lock,preLock,postLock,[LAB.events]);
     end
 end
 
+for indObs=[]
+    indTitles=   cLegs.obs;
+    indObservers  = cell( nObs+1,1);
+    indObservers {1}={'sessN', 'obs'};
+    for ObserverN = 1: nObs
+        indObservers {ObserverN+1} = num2cell([(1:length(cLegs.sessN))' ones(3,1)*ObserverN])  ;
+    end
+    IndPrePost=prepToPlot(sElect, indTitles, indObservers,LAB); % figures to be plotted
+    beginInd=find(lAttice==-preLock);
+    endInd=find(lAttice==postLock);
+    
+    for dataSet= IndPrePost
+        
+        figure;
+        
+        
+%         [hLine{fig},hPatch{fig}]=boundedline(lAttice(beginInd:endInd),...
+%             dataSet.results.avRate( beginInd:endInd,:),...
+%             dataSet.results.rateSEM(beginInd:endInd,1,:),...
+%             'cmap', LAB.col.sessN, 'transparency', .3, 'alpha'); hold on;
+%         set(hLine{fig}, 'HandleVisibility','off');
+        for lineN=1:dataSet.nGrps
+            plot( lAttice(beginInd:endInd), dataSet.results.avRate(beginInd:endInd,lineN),'color',LAB.col.sessN(lineN,:));
+            hold on
+        end
+        % make pretty
+        legend(dataSet.legend,'Location','NorthWest')
+        ylabel('Rate (Hz)'); xlabel ('Time (ms - relative to lock)');
+        xlim([-preLock postLock]) % xBounds{fig})
+%         ylim([0 5])
+        grid
+        title(sprintf('%s (%s)', dataSet.titles, sElect(find(dataSet.Indx', 1, 'first')).Group))
+        
+        %    event labeling
+        plotEvents(sElect,lock,preLock,postLock,[LAB.events]);
+    end
+end
 for hide =[]
     raster subplot
     sp1=subplot('position',[.1 .08 .88 .15]);
@@ -401,7 +448,7 @@ end
 
 %%  accuracy-  as func of MS Onset proximity  relative to target  ( BY CUE TYPE )
 %
-for hide=1
+for hide=[]
     lock=3; % event to lock analysis to
     start=-preLock;     stop=postLock;    halfWindow=40; % temporal smoothing
     spread=start:stop;   % period around the lock to analyze

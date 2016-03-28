@@ -1,4 +1,4 @@
-function [msac, radius] = microsacc(x,vel,VFAC,MINDUR,mergeInterval)
+function [msac, radius] = microsaccMerge(x,vel,VFAC,MINDUR,mergeInterval)
 %-------------------------------------------------------------------
 %
 %  FUNCTION microsacc.m
