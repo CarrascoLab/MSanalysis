@@ -21,7 +21,7 @@ MS.dur.min =6; % min microsaccade duration(ms)
 MS.dur.max =70; % max microsaccade duration (ms)
 MS.toss=2; % size of eye movement to discard a trial
 
-fprintf('Performing eye-movement analysis...\nLambda =%i \t Min Duration= %i \nOvershoot Suppression interval = %i\nMax MS amp =%f\tMin MS amp = %f\nData %s filtered',...
+fprintf('\nPerforming eye-movement analysis...\nLambda =%i \t Min Duration= %i \nOvershoot Suppression interval = %i\nMax MS amp =%f\tMin MS amp = %f\n%s filtering data...\n',...
     LAMBDA, minDur, SuppInt, MS.amp.max,MS.amp.min, filtName{filtType})
 
 

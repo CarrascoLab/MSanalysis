@@ -14,7 +14,7 @@ endArray=need(TRials, '',nEvents,'events'); % trial endpoints
 if lock==0 % from start point
     windBefore=-1;
     windAfter= max(endArray); % window after
-    nOfTrials=sum( endArray*ones(1,windAfter) > ones(size(endArray))*(1:windAfter) );% count trials at each time point
+    nOfTrials=sum( endArray*ones(1,windAfter) > ones(size(endArray))*(1:windAfter),1 );% count trials at each time point
     
     MSonsets=[TRials.EMon];
     
@@ -24,7 +24,7 @@ elseif lock>0&&lock<=nEvents% with lockpoint centered
     windBefore= max(lockArray)-1; % window before lock
     windAfter= max(endArray-lockArray); % window after lock
     nOfTrials=ones(size(endArray))*(-windBefore:windAfter); % just initializing nt
-    nOfTrials=sum((endArray-lockArray)* ones(1,size(nOfTrials,2)) > nOfTrials & nOfTrials > (-lockArray)*ones(1,size(nOfTrials,2))) ; % count trials at each time point
+    nOfTrials=sum((endArray-lockArray)* ones(1,size(nOfTrials,2)) > nOfTrials & nOfTrials > (-lockArray)*ones(1,size(nOfTrials,2)),1) ; % count trials at each time point
     
     temp=cellfun(@(pX,X) (pX(:)'-X(:)), {TRials.EMon}, num2cell(lockArray)','UniformOutput',false);
     MSonsets=[temp{:}];

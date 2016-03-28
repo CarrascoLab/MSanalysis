@@ -13,5 +13,5 @@ do
 	mv $f.msg ../raw/
 	rm $f.asc
 	
-	mv $f.edf ../edf/
+	mv $f.edf processed/
 done
