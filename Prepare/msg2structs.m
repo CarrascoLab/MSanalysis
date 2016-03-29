@@ -4,7 +4,7 @@
 % %% from scratch
 clear all
 addpath('../functions/');
-dFormat='yyyymmdd-HHMM'; % format of date in PL_ATTN_ACC data
+dFormat='yyyyMMdd-HHmm'; % format of date in PL_ATTN_ACC data
 
 % experiment design parameters
 DIST   = 114;         % Monitor distance in cm
@@ -74,7 +74,7 @@ fprintf('\n\nFinished processing EDFs\n')
 %%  collect
 
 addpath('../functions/');
-dFormat='yyyymmdd-HHMM'; % format of date in PL_ATTN_ACC data
+dFormat='yyyyMMdd-HHmm'; % format of date in PL_ATTN_ACC data
 
 % experiment design parameters
 DIST   = 114;         % Monitor distance in cm
@@ -94,20 +94,21 @@ matpath = 'Data/';
 % result locations %
 edfDeposit= '../edf/';
 processed='../processed/'; problem='problem/';
-outFold ='../sEssStrucs/';
+outFold ='../sEssStrucs/Prepped/';
 
 
 nFiles=416; % (any value ~=0)
 
-%  sEssion - struct Files have the following fields (+ SessType & Group)  :
+%  sEssion - struct Files have the following fields :
 sessFields={
     'obs'
-    'sEssDate'
-    'sEssType'
-    'Group'
+    'date'
+    'type'
+    'group'
     'diags'
     'trials'};
 
+%trials has the subfields: 
 trialFields={
     'block'
     'trial'
@@ -115,12 +116,12 @@ trialFields={
     'locTarg'
     'gapLev'
     'gapSz'
-    'gapLocT'
-    'gapLocD'
+    'TgapLoc'
+    'DgapLoc'
     'response'
     'correct'
     'keyRT'
-    'trStart'
+    'trialStart'
     'events'};
 
 % xy_pos & blinks are also added for each trial
@@ -177,8 +178,8 @@ while nFiles~=0
             msgfid = fopen([fileList(fileN).path   msgstr],'r');
             
             % get observer ID and session date
-            [obs,sEssDate]=feed(textscan( fCode, '%*s %s %s', 'Delimiter','_'));
-            obs=obs{1}; sEssDate=sEssDate{:};
+            [obs,sDate]=feed(textscan( fCode, '%*s %s %s', 'Delimiter','_'));
+            obs=obs{1}; sDate=datetime(sDate,'InputFormat',dFormat);
             
             fprintf(1,'\nprocessing %s.msg... ',fCode);
             stillTheSameSubject = true;
@@ -303,7 +304,7 @@ while nFiles~=0
             nTrials=size(trials); % number of trials present in incoming data
             nEvents=length(trials(1).events);% # events
             
-            tStamps= [[trials.trStart]' [trials.trStart]'+need(trials,:,nEvents,'events')]; % start/stop in timeStamp units
+            tStamps= [[trials.trialStart]' [trials.trialStart]'+need(trials,:,nEvents,'events')]; % start/stop in timeStamp units
             
             tIndx=zeros(size(tStamps'));
             [~,~,tIndx(:)]=intersect(tStamps,datDump{1}); %find indexes of start/stop time stamps
@@ -330,7 +331,7 @@ while nFiles~=0
             
             % arrange all the session data
             sessCell= {obs...
-                sEssDate...
+                sDate...
                 constant.SESS...
                 constant.GROUP...
                 constant.DIAG...
