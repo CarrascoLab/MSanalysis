@@ -9,6 +9,10 @@
 
 *.msg
 
+# back-ups
+
+*~
+
 # Compiled source #
 
 ###################
