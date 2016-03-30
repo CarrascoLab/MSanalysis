@@ -125,6 +125,7 @@ nFiles=length(fileList);
 
 fprintf('\n%i files identified...\n\n',nFiles)
 
+% load sEssions
 for f=nFiles:-1:1
     
     fCode=fileList(f).name(1:end-4); % file code
@@ -142,6 +143,7 @@ nObs= length (IDlist);
 
 fprintf('\n%i unique observers within data set.\n',nObs)
 
+% date -> session number
 for obN=1:nObs % for each observer
     oIndx= strcmp(IDlist(obN), {sEssions.obs});
     % sort the sessions by date
@@ -150,7 +152,11 @@ for obN=1:nObs % for each observer
     [sEssions(oIndx).num]=feed(order);
 end
     
-
+% rm - in session RT outliers  % % <- debateable 
+% rm - blinks before critEvent# 
+% filter trials
+% calc velocity 
+% padded-blink blotting ( -> nan)
 for f=1:nFiles
     
      % % %         % % %
@@ -215,6 +221,28 @@ for f=1:nFiles
             sEssions(f).trials(t).vel(padBlinks,:)]=deal(nan);
     end
     
+end
+
+
+% saccade detection 
+
+algorithmChoice=input('Which algorithm?: \n 1. microsaccMerge \n 2. microsaccPare \n 3. microsacc \n')
+
+switch
+    case 1
+        algo=@(a,b,c,d,e) microsaccMerge(a,b,c,d,e);
+    case 2
+        algo=@(a,b,c,d,e) microsaccPare(a,b,c,d,e);
+    case 3
+        algo=@(a,b,c,d,e) microsacc(a,b,c,d,e);
+    otherwise
+           algorithmChoice=input...
+               ('Which algorithm?: \n 1. microsaccMerge \n 2. microsaccPare \n 3. microsacc \n')
+end
+
+algo=@(a,b,c,d,e) microsaccPare(a,b,c,d,e);
+for f=1:nFiles
+    nTrials=length(sEssions(f).trials);
      % % %           % % %
     % % %  Saccade  % % %
      % % % Detection % % %
@@ -222,9 +250,14 @@ for f=1:nFiles
     % temp variables for (micro)saccade detection %
     [vTh,md,si,a]=deal(cell(1,nTrials)); vTh(:)={LAMBDA }; md(:)={minDur}; si(:)={SuppInt}; a(:)={1};
 
-    [emParams, radius]=cellfun(@microsaccPare,...
-        {sEssions(f).trials.xy_filt},{sEssions(f).trials.vel},vTh, md,si, ...
-        'UniformOutput',0); % detect EMs
+    % detect EMs
+    [emParams, radius]=cellfun(@(a,b,c,d,e) algo(a,b,c,d,e),...
+    {sEssions(f).trials.xy_filt},{sEssions(f).trials.vel}, ...
+    vTh, md,si,'UniformOutput',0);
+%     [emParams, radius]=cellfun(@microsaccPare,...
+%         {sEssions(f).trials.xy_filt},{sEssions(f).trials.vel}, ...
+%         vTh, md,si,'UniformOutput',0); 
+    
     [sEssions(f).trials.vThr]=radius{:}; % Velocity component thresholds
     msParams= cellfun(@saccpar, emParams,'UniformOutput',0); % get saccade params
     % % %
